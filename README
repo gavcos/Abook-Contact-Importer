@@ -1,0 +1,12 @@
+This program converts a gmail vCard address book into a format readable by abook
+(http://abook.sourceforge.net).
+
+To export your gmail contacts in vCard format, select Contacts -> Export and choose the 3rd export format (vCard).
+
+The file will be saved by default as contacts.vcf
+
+The input file (i.e. the vCard address book to import) can be specified with the -i parameter, and by default this is contacts.vcf.
+
+The output file (i.e. the abook address book file to export) to can be specified with the -o parameter, and by default this is addressbook.
+
+To obtain debug output, run the script with the -d parameter.
