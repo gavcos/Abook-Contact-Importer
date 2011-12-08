@@ -107,6 +107,23 @@ for line in cfile.readlines():
         except IndexError:
             nick = line.split(':')[1]
         ofile.write('nick=%s\n' % nick.strip())
+    elif (line.startswith('ADR')):
+        # Address
+        adr_parts = line.split(';')[2:]
+        for i, part in enumerate(adr_parts):
+            if (part):
+                if i == 0:
+                    ofile.write('address_lines=%s\n' % part)
+                if i == 1:
+                    ofile.write('address_lines=%s\n' % part)
+                if i == 2:
+                    ofile.write('city=%s\n' % part)
+                if i == 3:
+                    ofile.write('state=%s\n' % part)
+                if i == 4:
+                    ofile.write('zip=%s\n' % part)
+                if i == 5:
+                    ofile.write('country=%s\n' % part)
     else:
         continue;
 
