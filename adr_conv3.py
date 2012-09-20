@@ -35,6 +35,9 @@ name = '';  # Contact name
 phone = ''; # Contact phone
 email = ''; # Contact email
 nick = '';  # Contact nickname
+org = '';   # Contact organisation
+note = '';  # Notes
+emails = [] # Email list
 count = 0; # Contacts count
 
 # Open input file, read-only
@@ -60,18 +63,17 @@ ofile.write('\n')
 for line in cfile.readlines():
     # Name field
     if (line.startswith('FN')):
-        name = line.split(':')[1]
+        name = line.split(':')[1].strip()
         #name = unicode(name, 'utf-8')
         ofile.write('\n')
         ofile.write('[%d]\n' % count)
         count += 1
-        name = str(name)
         if opts.debug:
             print(name, end="")
-        ofile.write('name=%s' % name)
+        ofile.write('name=%s\n' % name)
     elif (line.startswith('EMAIL')):
-        email = line.split(':')[1]
-        ofile.write('email=%s' % email)
+        email = line.split(':')[1].strip()
+        emails.append(email)
     elif (line.startswith('TEL')):
         # Verify if it's a fax number
         parts = line.split(';')
@@ -100,13 +102,21 @@ for line in cfile.readlines():
             ofile.write('mobile=%s' % phone)
         if (type == 'WORK'):
             ofile.write('workphone=%s' % phone)
-    elif (line.startswith('NOTE')):
+    elif (line.startswith('NICKNAME')):
         # Notes / nicknames
         try:
-            nick = line.split(':')[2]
+            nick = line.split(':')[2].strip()
         except IndexError:
-            nick = line.split(':')[1]
-        ofile.write('nick=%s\n' % nick.strip())
+            nick = line.split(':')[1].strip()
+        ofile.write('nick=%s\n' % nick,)
+    elif (line.startswith('ORG')):
+        org = line.split(':')[1].strip()
+        if ((name == "") & (org != "")):
+            ofile.write('name=%s' % org,)
+            ofile.write('custom1=%s' % org,)
+    elif (line.startswith('NOTE')):
+        note = line.split(':')[1].strip()
+        ofile.write('note=%s\n' % note,)
     elif (line.startswith('ADR')):
         # Address
         adr_parts = line.split(';')[2:]
@@ -124,6 +134,10 @@ for line in cfile.readlines():
                     ofile.write('zip=%s\n' % part)
                 if i == 5:
                     ofile.write('country=%s\n' % part)
+    elif (line.startswith('END')):
+        if (len(emails) > 0):
+            ofile.write('email=%s\n' % ", ".join(emails),)
+            emails = []
     else:
         continue;
 

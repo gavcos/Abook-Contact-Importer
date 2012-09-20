@@ -35,6 +35,9 @@ name = '';  # Contact name
 phone = ''; # Contact phone
 email = ''; # Contact email
 nick = '';  # Contact nickname
+org = '';   # Contact organisation
+note = '';  # Any notes
+emails = []
 count = 0; # Contacts count
 
 # Open input file, read-only
@@ -60,7 +63,7 @@ ofile.write(u'\n')
 for line in cfile.readlines():
     # Name field
     if (line.startswith('FN')):
-        name = line.split(':')[1]
+        name = line.split(':')[1].strip()
         #name = unicode(name, 'utf-8')
         ofile.write(u'\n')
         ofile.write(u'[%d]\n' % count)
@@ -75,24 +78,25 @@ for line in cfile.readlines():
         name = name.encode('utf-8', 'replace')
         if opts.debug:
             print name,
-        ofile.write('name=%s' % name,)
+        if (name != ""):
+            ofile.write('name=%s\n' % name,)
     elif (line.startswith('EMAIL')):
-        email = line.split(':')[1]
-        ofile.write(u'email=%s' % email,)
+        email = line.split(':')[1].strip()
+        emails.append(email)
     elif (line.startswith('TEL')):
         # Verify if it's a fax number
         parts = line.split(';')
         if (len(parts) > 2): # Fax number
-            phone = parts[2].split(':')[1]
-            ofile.write(u'fax=%s' % phone,)
+            phone = parts[2].split(':')[1].strip()
+            ofile.write(u'fax=%s\n' % phone,)
             continue
 
         # Normal telephone number
         try:
             tel = parts[1]
         except IndexError: # Phone type not defined (other in gmail)
-            phone = line.split(':')[1]
-            ofile.write(u'mobile=%s' % phone,)
+            phone = line.split(':')[1].strip()
+            ofile.write(u'mobile=%s\n' % phone,)
             continue
 
         fulltype = tel.split('=')[1]
@@ -100,20 +104,60 @@ for line in cfile.readlines():
         if opts.debug:
             print u'type=%s' % type,
 
-        phone = line.split(':')[1]
+        phone = line.split(':')[1].strip()
         if (type == 'HOME'):
-            ofile.write(u'phone=%s' % phone,)
+            ofile.write(u'phone=%s\n' % phone,)
         if (type == 'CELL'):
-            ofile.write(u'mobile=%s' % phone,)
+            ofile.write(u'mobile=%s\n' % phone,)
         if (type == 'WORK'):
-            ofile.write(u'workphone=%s' % phone,)
-    elif (line.startswith('NOTE')):
-        # Notes / nicknames
+            ofile.write(u'workphone=%s\n' % phone,)
+    elif (line.startswith('NICKNAME')):
+        # Nickname
         try:
-            nick = line.split(':')[2]
+            nick = line.split(':')[2].strip()
         except IndexError:
-            nick = line.split(':')[1]
-        ofile.write(u'nick=%s\n' % nick.strip())
+            nick = line.split(':')[1].strip()
+        ofile.write(u'nick=%s\n' % nick,)
+    elif (line.startswith('ORG')):
+        org = line.split(':')[1].strip()
+        if ((name == "") & (org != "")):
+            ofile.write(u'name=%s\n' % org,)
+            ofile.write(u'custom1=%s\n' % org,)
+    elif (line.startswith('NOTE')):
+        note = line.split(':')[1].strip()
+        try:
+            note = unicode(note, 'ascii')
+        except UnicodeError:
+            note = unicode(note, 'utf-8')
+        else:
+            # value was valid ASCII date
+            pass
+        note = note.encode('utf-8', 'replace')
+        if opts.debug:
+            print note,
+        if (note != ""):
+            ofile.write('note=%s\n' % note,)
+    elif (line.startswith('ADR')):
+        # Address
+        adr_parts = line.split(';')[2:]
+        for i, part in enumerate(adr_parts):
+            if (part):
+                if i == 0:
+                    ofile.write('address_lines=%s\n' % part.strip())
+                if i == 1:
+                    ofile.write('address_lines=%s\n' % part.strip())
+                if i == 2:
+                    ofile.write('city=%s\n' % part.strip())
+                if i == 3:
+                    ofile.write('state=%s\n' % part.strip())
+                if i == 4:
+                    ofile.write('zip=%s\n' % part.strip())
+                if i == 5:
+                    ofile.write('country=%s\n' % part.strip())
+    elif (line.startswith('END')):
+        if (len(emails) > 0):
+            ofile.write(u'email=%s\n' % ", ".join(emails),)
+            emails = []
     else:
         continue;
 
